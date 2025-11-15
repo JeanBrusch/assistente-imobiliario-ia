@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente Imobiliario IA</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:system-ui,sans-serif;background:#f9fafb;height:100vh;overflow:hidden}
+        .container{display:flex;flex-direction:column;height:100vh}
+        .header{background:linear-gradient(135deg,#2563eb,#1e40af);color:white;padding:1.5rem}
+        .header h1{font-size:1.75rem;margin-bottom:0.25rem}
+        .messages{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+        .message{display:flex}
+        .message.user{justify-content:flex-end}
+        .msg-bubble{max-width:65%;padding:0.875rem 1.25rem;border-radius:1rem;white-space:pre-wrap}
+        .message.user .msg-bubble{background:#2563eb;color:white}
+        .message.ai .msg-bubble{background:#e5e7eb;color:#1f2937}
+        .input-area{background:white;border-top:2px solid #e5e7eb;padding:1rem;display:flex;gap:0.75rem}
+        input{flex:1;padding:0.75rem;border:2px solid #e5e7eb;border-radius:0.5rem}
+        .btn{padding:0.75rem 1.25rem;border:none;border-radius:0.5rem;font-weight:600;cursor:pointer}
+        .btn-send{background:#2563eb;color:white}
+        .btn-lead{background:#16a34a;color:white}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;align-items:center;justify-content:center}
+        .modal.active{display:flex}
+        .modal-content{background:white;border-radius:1rem;padding:2rem;max-width:32rem;width:90%}
+        .form-group{margin-bottom:1.25rem}
+        .form-group label{display:block;font-weight:600;margin-bottom:0.5rem}
+        .form-group input,.form-group textarea{width:100%;padding:0.75rem;border:2px solid #e5e7eb;border-radius:0.5rem}
+        .form-buttons{display:flex;gap:0.75rem}
+        .btn-submit{background:#2563eb;color:white;flex:1}
+        .btn-cancel{background:#f3f4f6;flex:1}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Assistente Imobiliario IA</h1>
+            <p>Busca inteligente + Gerenciamento de leads</p>
+        </div>
+        <div class="messages" id="m"></div>
+        <div class="input-area">
+            <form id="f" style="display:flex;width:100%;gap:0.75rem">
+                <input id="i" placeholder="Digite sua busca..." autocomplete="off">
+                <button type="submit" class="btn btn-send">Enviar</button>
+                <button type="button" class="btn btn-lead" onclick="om()">+ Lead</button>
+            </form>
+        </div>
+    </div>
+    <div class="modal" id="mo">
+        <div class="modal-content">
+            <h2>Registrar Lead</h2>
+            <form id="lf">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input id="n" placeholder="Ex: Joao Silva" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input id="t" placeholder="Ex: (55) 99999-9999" required>
+                </div>
+                <div class="form-group">
+                    <label>Descricao</label>
+                    <textarea id="d" placeholder="Detalhes..." rows="4" required></textarea>
+                </div>
+                <div id="st"></div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-submit">Registrar</button>
+                    <button type="button" class="btn btn-cancel" onclick="cm()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        const S='https://topxretiehpulhyovfhg.supabase.co',K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvcHhyZXRpZWhwdWxoeW92ZmhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxODgzNzcsImV4cCI6MjA3ODc2NDM3N30.9OkH4JAl8Eb13sKZyW--9CsdTBDtqBGYvRz10nRW5EA',A='https://topxretiehpulhyovfhg.supabase.co/functions/v1/natural-search';
+        const sb=window.supabase.createClient(S,K);
+        const m=document.getElementById('m'),f=document.getElementById('f'),i=document.getElementById('i'),mo=document.getElementById('mo');
+        function am(t,u){const d=document.createElement('div');d.className=`message ${u?'user':'ai'}`;const b=document.createElement('div');b.className='msg-bubble';b.textContent=t;d.appendChild(b);m.appendChild(d);m.scrollTop=m.scrollHeight}
+        function om(){mo.classList.add('active')}
+        function cm(){mo.classList.remove('active')}
+        am('Ola! \u00f1 Posso ajudar com:\n✓ Registrar novos leads\n✓ Buscar imoveis\n✓ Listar propriedades',false);
+        f.onsubmit=async e=>{e.preventDefault();if(!i.value.trim())return;am(i.value,true);const q=i.value;i.value='';const kw=['buscar','procurar','mostrar','encontrar','listar'];const isS=kw.some(k=>q.toLowerCase().includes(k));if(isS){try{const r=await fetch(A,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})});const data=await r.json();const txt=data.results?.length?`Encontrei ${data.results.length} imovel(is):\n\n${data.results.map((x,i)=>`${i+1}. ${x.observacao}\nCliente: ${x.client_nome}\nTel: ${x.client_telefone}`).join('\n\n')}`:'Nenhum imovel encontrado';am(txt,false)}catch(err){am('Erro: '+err.message,false)}}else if(q.toLowerCase().includes('registr')||q.toLowerCase().includes('novo')){om()}else{am('Como posso ajudar?\n• Registrar novo lead\n• Buscar imoveis\n• Gerenciar clientes',false)}};
+        document.getElementById('lf').onsubmit=async e=>{e.preventDefault();const st=document.getElementById('st');st.innerHTML='';try{const {data:c,error:ce}=await sb.from('clients').insert([{nome:document.getElementById('n').value,telefone:document.getElementById('t').value}]).select('id').single();if(ce)throw new Error(ce.message);if(c?.id){const {error:ne}=await sb.from('notes').insert([{client_id:c.id,observacao:document.getElementById('d').value}]);if(ne)throw new Error(ne.message)}st.innerHTML='<p style="color:#166534;background:#dcfce7;padding:0.75rem;border-radius:0.5rem">✅ Lead registrado!</p>';setTimeout(()=>cm(),1500)}catch(err){st.innerHTML=`<p style="color:#991b1b;background:#fee2e2;padding:0.75rem;border-radius:0.5rem">❌ ${err.message}</p>`}}
+    </script>
+</body>
+</html>
